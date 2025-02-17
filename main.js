@@ -9,6 +9,7 @@ squares.forEach(square => {
         offsetY = event.clientY - square.getBoundingClientRect().top;
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
+        square.style.cursor = 'grabbing'; 
     });
 });
 
@@ -36,6 +37,7 @@ function onMouseMove(event) {
 }
 
 function onMouseUp() {
+    activeSquare.style.cursor = 'grab'; 
     activeSquare = null;
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
@@ -58,19 +60,41 @@ function pushSquare(activeSquare, otherSquare) {
     const overlapX = Math.min(rectActive.right - rectOther.left, rectOther.right - rectActive.left);
     const overlapY = Math.min(rectActive.bottom - rectOther.top, rectOther.bottom - rectActive.top);
 
+    let newLeft = parseFloat(otherSquare.style.left);
+    let newTop = parseFloat(otherSquare.style.top);
+    
     if (overlapX < overlapY) {
         if (rectActive.left < rectOther.left) {
-            otherSquare.style.left = (rectOther.left + overlapX) + 'px';
+            newLeft += overlapX;
         } else {
-            otherSquare.style.left = (rectOther.left - overlapX) + 'px';
+            newLeft -= overlapX;
         }
     } else {
         if (rectActive.top < rectOther.top) {
-            otherSquare.style.top = (rectOther.top + overlapY) + 'px';
+            newTop += overlapY;
         } else {
-            otherSquare.style.top = (rectOther.top - overlapY) + 'px';
+            newTop -= overlapY;
         }
     }
+
+    const minLeft = 0;
+    const maxLeft = window.innerWidth - otherSquare.offsetWidth;
+    const minTop = 0;
+    const maxTop = window.innerHeight - otherSquare.offsetHeight;
+    
+    if (newLeft < minLeft) newLeft = minLeft;
+    if (newLeft > maxLeft) newLeft = maxLeft;
+    if (newTop < minTop) newTop = minTop;
+    if (newTop > maxTop) newTop = maxTop;
+
+    otherSquare.style.left = newLeft + 'px';
+    otherSquare.style.top = newTop + 'px';
+
+    squares.forEach(square => {
+        if (square !== activeSquare && square !== otherSquare && isColliding(otherSquare, square)) {
+            pushSquare(otherSquare, square); 
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
